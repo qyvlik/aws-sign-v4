@@ -8,3 +8,5 @@ RUN apk add --no-cache curl perl
 
 RUN opm get jkeys089/lua-resty-hmac
 
+RUN opm get xiedacon/lua-utility
+
