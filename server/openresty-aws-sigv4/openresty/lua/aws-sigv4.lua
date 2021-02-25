@@ -105,6 +105,7 @@ for key, val in pairs_by_keys(ngx.req.get_headers()) do
         table.insert(canonical_headers, header);
     end
 end
+-- todo lost some header
 local canonical_headers_string = table.concat(canonical_headers, '\n') .. '\n';
 
 local method = ngx.req.get_method();
