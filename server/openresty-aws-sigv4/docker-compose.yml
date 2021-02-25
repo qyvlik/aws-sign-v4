@@ -3,7 +3,9 @@ version: '2'
 services:
 
   openresty:
-    image: openresty/openresty:alpine
+    build:
+      context: .
+      dockerfile: ./Dockerfile
     volumes:
       - ./openresty/conf.d/:/etc/nginx/conf.d/
       - ./openresty/nginx.conf:/usr/local/openresty/nginx/conf/nginx.conf
