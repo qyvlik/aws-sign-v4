@@ -23,18 +23,24 @@ local function pairsByKeys (t, f)
     return iter
 end
 
-local function hmac_sha256(secret, data)
+local function hmac_sha256(secret, data, to_hex)
     local hash = resty_hmac:new(secret, resty_hmac.ALGOS.SHA256);
     hash:update(data);
-    local mac = hash:final();
-    return resty_string.to_hex(mac);
+    local digest = hash:final();
+    if to_hex then
+        return resty_string.to_hex(digest);
+    end
+    return digest;
 end
 
-local function sha256(data)
+local function sha256(data, to_hex)
     local hash = resty_sha256:new()
     hash:update(data);
-    local mac = hash:final();
-    return resty_string.to_hex(mac);
+    local digest = hash:final();
+    if to_hex then
+        return resty_string.to_hex(digest);
+    end
+    return digest;
 end
 
 local authorization = ngx.req.get_headers()["authorization"];
@@ -92,7 +98,7 @@ end
 local canonical_query_string = table.concat(canonical_query, '&');
 
 local request_payload = ngx.req.get_body_data() or '';
-local hashed_payload = hmac_sha256(secret_key, request_payload);
+local hashed_payload = sha256(request_payload, true);
 
 local canonical_request = method .. '\n'
         .. canonical_uri .. '\n'
@@ -103,7 +109,7 @@ local canonical_request = method .. '\n'
 
 ngx.say("canonical_request ", canonical_request);
 
-local hashed_canonical_request = sha256(canonical_request);
+local hashed_canonical_request = sha256(canonical_request, true);
 
 ngx.say("hashed_canonical_request ", hashed_canonical_request);
 
@@ -131,7 +137,7 @@ local k_signing = hmac_sha256(k_service, 'aws4_request');
 
 ngx.say("k_signing ", k_signing);
 
-local signature = hmac_sha256(k_signing, string_to_sign);
+local signature = hmac_sha256(k_signing, string_to_sign, true);
 
 ngx.say("signature ", signature);
 ngx.say("client_signature ", client_signature);
