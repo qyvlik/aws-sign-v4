@@ -11,4 +11,4 @@ services:
       - ./openresty/lua:/usr/local/openresty/nginx/lua
       - ./openresty/nginx.conf:/usr/local/openresty/nginx/conf/nginx.conf
     ports:
-      - "3001:3001"
+      - "80:3000"

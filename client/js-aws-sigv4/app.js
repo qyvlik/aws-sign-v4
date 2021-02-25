@@ -11,11 +11,11 @@ async function fetch({method, scheme, host, path, headers, body}) {
 
 const opts = {
     scheme: 'http',
-    host: 'localhost:3001',
+    host: 'localhost',
     path: '/my-object',
     service: 's3',
     region: 'us-west-1',
-    method: 'POST'
+    method: 'GET'
 };
 
 
