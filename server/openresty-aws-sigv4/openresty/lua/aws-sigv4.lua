@@ -1,7 +1,6 @@
 local resty_hmac = require "resty.hmac";
 local utility_string = require "utility.string";
 local resty_string = require "resty.string";
-
 local resty_sha256 = require "resty.sha256"
 
 local function pairsByKeys (t, f)
@@ -44,6 +43,13 @@ local function sha256(data, to_hex)
 end
 
 local authorization = ngx.req.get_headers()["authorization"];
+
+if authorization == '' or authorization == nil then
+    ngx.say('authorization is nullzzz');
+    ngx.exit(ngx.ERROR);
+    return;
+end
+
 local algorithm_end_index = string.find(authorization, ' ', 1);
 local algorithm = string.sub(authorization, 1, algorithm_end_index - 1);
 local other_part = string.sub(authorization, algorithm_end_index + 1, -1);

@@ -21,3 +21,7 @@ luarocks install --tree lua_modules  lua-resty-hmac
 ## opm
 
 https://opm.openresty.org/package/jkeys089/lua-resty-hmac
+
+## Lua Ngx API
+
+https://openresty-reference.readthedocs.io/en/latest/Lua_Nginx_API/

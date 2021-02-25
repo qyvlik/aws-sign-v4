@@ -30,31 +30,33 @@ const post_opts = {
 };
 
 
+async function get_test(index) {
+    aws4.sign(get_opts);
+    console.time(`openresty-aws-signv4:get:${index}`);
+    const res = await fetch(get_opts);
+    console.timeEnd(`openresty-aws-signv4:get:${index}`);
+    const body = await res.text();
+    // console.info(`body: \n${body}`);
+    // console.info(get_opts);
+}
+
+async function post_test(index) {
+    aws4.sign(post_opts);
+    console.time(`openresty-aws-signv4:post:${index}`);
+    const res = await fetch(post_opts);
+    console.timeEnd(`openresty-aws-signv4:post:${index}`);
+    const body = await res.text();
+    // console.info(`body: \n${body}`);
+    // console.info(post_opts);
+}
+
 (async () => {
-    let index = 10;
+    let index = 1000;
 
     while (index-- > 0) {
-        {
-            aws4.sign(get_opts);
-            console.time("openresty-aws-signv4:get");
-            const res = await fetch(get_opts);
-            console.timeEnd("openresty-aws-signv4:get");
-            const body = await res.text();
-            console.info(`body: \n${body}`);
-            console.info(get_opts);
-        }
-        {
-            aws4.sign(post_opts);
-            console.time("openresty-aws-signv4:post");
-            const res = await fetch(post_opts);
-            console.timeEnd("openresty-aws-signv4:post");
-            const body = await res.text();
-            console.info(`body: \n${body}`);
-            console.info(post_opts);
-        }
+        get_test(index);
+        post_test(index);
     }
-
-
 })();
 
 
