@@ -21,12 +21,17 @@ const opts = {
 
 // aws4.sign() will sign and modify these options, ready to pass to http.request
 aws4.sign(opts);
-console.info(opts);
+
 
 (async () => {
+    console.time("openresty-aws-signv4");
     const res = await fetch(opts);
+    console.timeEnd("openresty-aws-signv4");
     const body = await res.text();
     console.info(`body: \n${body}`);
+
+
+    console.info(opts);
 })();
 
 

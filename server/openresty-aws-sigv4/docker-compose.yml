@@ -7,7 +7,8 @@ services:
       context: .
       dockerfile: ./Dockerfile
     volumes:
-      - ./openresty/conf.d/:/etc/nginx/conf.d/
+      - ./openresty/conf.d/:/usr/local/openresty/nginx/conf.d/
+      - ./openresty/lua:/usr/local/openresty/nginx/lua
       - ./openresty/nginx.conf:/usr/local/openresty/nginx/conf/nginx.conf
     ports:
       - "3001:3001"
