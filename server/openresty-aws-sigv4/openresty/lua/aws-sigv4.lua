@@ -2,8 +2,9 @@ local resty_hmac = require "resty.hmac";
 local utility_string = require "utility.string";
 local resty_string = require "resty.string";
 local resty_sha256 = require "resty.sha256"
+local json = require "cjson"
 
-local function pairsByKeys (t, f)
+local function pairs_by_keys (t, f)
     local a = {}
     for n in pairs(t) do
         table.insert(a, n)
@@ -42,17 +43,33 @@ local function sha256(data, to_hex)
     return digest;
 end
 
-local authorization = ngx.req.get_headers()["authorization"];
+function goodbye(status)
+    ngx.status = status;
+    ngx.header.content_type = "application/json;charset=utf8"
+    ngx.say(json.encode({
+        code = status,
+        message = '',
+        data = json.null,
+        success = false
+    }));
+end
 
+local authorization = ngx.req.get_headers()["authorization"];
 if authorization == '' or authorization == nil then
-    ngx.say('authorization is nullzzz');
-    ngx.exit(ngx.ERROR);
-    return;
+    ngx.log(ngx.ERR, 'header authorization is blank');
+    goodbye(ngx.HTTP_UNAUTHORIZED);
+    return ;
+end
+
+local request_date_time = ngx.req.get_headers()["x-amz-date"];
+if request_date_time == '' or request_date_time == nil then
+    ngx.log(ngx.ERR, 'header x-amz-date is blank');
+    goodbye(ngx.HTTP_BAD_REQUEST);
 end
 
 local algorithm_end_index = string.find(authorization, ' ', 1);
 local algorithm = string.sub(authorization, 1, algorithm_end_index - 1);
-local other_part = string.sub(authorization, algorithm_end_index + 1, -1);
+local authorization_part = string.sub(authorization, algorithm_end_index + 1, -1);
 
 local credential = '';
 local access_key = '';
@@ -61,9 +78,8 @@ local credential_scope = '';
 local signed_headers_str = '';
 local signed_headers = {};
 local client_signature = '';
-local request_date_time = ngx.req.get_headers()["x-amz-date"];
 
-for _, val in pairs(utility_string.split(other_part, ', ')) do
+for _, val in pairs(utility_string.split(authorization_part, ', ')) do
     if utility_string.startsWith(val, 'Credential=') then
         -- Credential=a000000-0000-0000-0000-0000000000/20210225/us-west-1/s3/aws4_request
         credential = string.gsub(val, 'Credential=', '', 1);
@@ -83,13 +99,12 @@ for _, val in pairs(utility_string.split(other_part, ', ')) do
 end
 
 local canonical_headers = {};
-for key, val in pairsByKeys(ngx.req.get_headers()) do
+for key, val in pairs_by_keys(ngx.req.get_headers()) do
     if signed_headers[key] then
         local header = string.lower(key) .. ':' .. utility_string.trim(val);
         table.insert(canonical_headers, header);
     end
 end
-
 local canonical_headers_string = table.concat(canonical_headers, '\n') .. '\n';
 
 local method = ngx.req.get_method();
@@ -97,7 +112,7 @@ local canonical_uri = ngx.var.uri;
 
 local canonical_query = {};
 local args = ngx.req.get_uri_args();
-for key, val in pairsByKeys(args) do
+for key, val in pairs_by_keys(args) do
     local param = ngx.escape_uri(key) .. '=' .. ngx.escape_uri(val);
     table.insert(canonical_query, param);
 end
@@ -113,18 +128,12 @@ local canonical_request = method .. '\n'
         .. signed_headers_str .. '\n'
         .. hashed_payload
 
-ngx.say("canonical_request ", canonical_request);
-
 local hashed_canonical_request = sha256(canonical_request, true);
-
-ngx.say("hashed_canonical_request ", hashed_canonical_request);
 
 local string_to_sign = algorithm .. '\n'
         .. request_date_time .. '\n'
         .. credential_scope .. '\n'
         .. hashed_canonical_request;
-
-ngx.say("string_to_sign ", string_to_sign);
 
 local scope = utility_string.split(credential_scope, '/');
 
@@ -132,16 +141,10 @@ local date = scope[1]
 local region = scope[2];
 local service = scope[3];
 
-ngx.say('date ', date);
-ngx.say('region ', region);
-ngx.say('service ', service);
-
 local k_data = hmac_sha256("AWS4" .. secret_key, date);
 local k_region = hmac_sha256(k_data, region);
 local k_service = hmac_sha256(k_region, service);
 local k_signing = hmac_sha256(k_service, 'aws4_request');
-
-ngx.say("k_signing ", k_signing);
 
 local signature = hmac_sha256(k_signing, string_to_sign, true);
 
