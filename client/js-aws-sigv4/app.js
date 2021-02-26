@@ -51,7 +51,7 @@ async function post_test(index) {
 }
 
 (async () => {
-    let index = 1000;
+    let index = 20;
 
     while (index-- > 0) {
         get_test(index);
